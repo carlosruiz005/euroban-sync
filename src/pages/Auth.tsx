@@ -23,10 +23,16 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && roles.length > 0) {
+      // Redirect executives to approvals page
+      if (hasRole('executive')) {
+        navigate('/approvals', { replace: true });
+      }
       // Redirect clients to upload page
-      if (hasRole('client')) {
+      else if (hasRole('client')) {
         navigate('/upload', { replace: true });
-      } else {
+      } 
+      // Redirect other roles to dashboard
+      else {
         navigate('/dashboard', { replace: true });
       }
     }

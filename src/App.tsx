@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NonClientRoute } from "@/components/NonClientRoute";
+import { ExecutiveRoute } from "@/components/ExecutiveRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -44,9 +45,9 @@ const App = () => (
             <Route 
               path="/approvals" 
               element={
-                <ProtectedRoute requiredRole="executive">
+                <ExecutiveRoute>
                   <Approvals />
-                </ProtectedRoute>
+                </ExecutiveRoute>
               } 
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
