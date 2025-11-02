@@ -24,7 +24,21 @@ export default function ClientUpload() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const allowedExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
+      
+      if (!allowedExtensions.includes(fileExtension)) {
+        toast({
+          title: "Tipo de archivo no permitido",
+          description: "Solo se permiten archivos Excel (.xlsx, .xls) y CSV (.csv)",
+          variant: "destructive",
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setFile(selectedFile);
     }
   };
 
@@ -210,6 +224,7 @@ export default function ClientUpload() {
                   <Input
                     id="file-input"
                     type="file"
+                    accept=".xlsx,.xls,.csv"
                     onChange={handleFileChange}
                     required
                     className="cursor-pointer"
