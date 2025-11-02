@@ -1,0 +1,6 @@
+nombre_completo,cedula,fecha_nacimiento,telefono,email,direccion,monto_solicitado,plazo_meses,destino_prestamo,ingresos_mensuales,gastos_mensuales,referencias_nombre,referencias_telefono
+Juan Pérez González,118-2345678-9,15/03/1985,809-555-1234,juan.perez@email.com,"Calle Principal #45, Santo Domingo",500000,24,Vivienda,75000,35000,María López,809-555-5678
+Ana María Rodríguez,118-3456789-0,22/07/1990,829-555-2345,ana.rodriguez@email.com,"Av. Winston Churchill #123, Santo Domingo",300000,18,Educación,50000,25000,Carlos Díaz,809-555-6789
+Roberto Santos,118-4567890-1,10/11/1978,849-555-3456,roberto.santos@email.com,"Calle El Sol #78, Santiago",750000,36,Negocio,120000,60000,Luisa Fernández,809-555-7890
+Carmen Jiménez,118-5678901-2,05/02/1988,809-555-4567,carmen.jimenez@email.com,"Av. 27 de Febrero #234, Santo Domingo",450000,30,Automóvil,85000,40000,Pedro Martínez,809-555-8901
+Miguel Ángel Cruz,118-6789012-3,18/09/1982,829-555-5678,miguel.cruz@email.com,"Calle Duarte #56, La Vega",600000,24,Consolidación deuda,95000,50000,Isabel García,809-555-9012

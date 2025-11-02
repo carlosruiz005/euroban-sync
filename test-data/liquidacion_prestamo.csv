@@ -1,0 +1,6 @@
+numero_prestamo,nombre_cliente,cedula,fecha_desembolso,monto_original,saldo_pendiente,cuotas_pagadas,cuotas_totales,ultima_cuota_fecha,monto_ultima_cuota,interes_acumulado,mora_acumulada,total_liquidacion
+PR-2023-001,Juan Pérez González,118-2345678-9,15/01/2023,500000,250000,12,24,15/12/2024,23500,45000,0,295000
+PR-2023-015,Ana María Rodríguez,118-3456789-0,22/03/2023,300000,180000,10,18,22/01/2025,18200,28000,5000,213000
+PR-2022-089,Roberto Santos,118-4567890-1,10/05/2022,750000,125000,30,36,10/11/2024,24800,95000,0,220000
+PR-2023-042,Carmen Jiménez,118-5678901-2,05/06/2023,450000,320000,8,30,05/02/2025,17500,52000,8000,380000
+PR-2022-156,Miguel Ángel Cruz,118-6789012-3,18/11/2022,600000,200000,18,24,18/05/2024,28000,72000,0,272000
