@@ -166,6 +166,7 @@ export type Database = {
           created_at: string
           current_version: number
           description: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
           id: string
           status: Database["public"]["Enums"]["document_status"]
           title: string
@@ -176,6 +177,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           description?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
           id?: string
           status?: Database["public"]["Enums"]["document_status"]
           title: string
@@ -186,6 +188,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           description?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
           id?: string
           status?: Database["public"]["Enums"]["document_status"]
           title?: string
@@ -331,6 +334,10 @@ export type Database = {
         | "changes_requested"
         | "approved"
         | "rejected"
+      document_type:
+        | "solicitud_prestamo"
+        | "liquidacion_prestamo"
+        | "datos_generales"
       notification_type:
         | "document_uploaded"
         | "change_requested"
@@ -471,6 +478,11 @@ export const Constants = {
         "changes_requested",
         "approved",
         "rejected",
+      ],
+      document_type: [
+        "solicitud_prestamo",
+        "liquidacion_prestamo",
+        "datos_generales",
       ],
       notification_type: [
         "document_uploaded",

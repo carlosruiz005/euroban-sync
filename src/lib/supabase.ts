@@ -4,6 +4,7 @@ import type { User, Session } from "@supabase/supabase-js";
 export type AppRole = 'admin' | 'internal_team' | 'executive' | 'client' | 'bank';
 export type DocumentStatus = 'draft' | 'pending_review' | 'changes_requested' | 'approved' | 'rejected';
 export type NotificationType = 'document_uploaded' | 'change_requested' | 'document_approved' | 'document_rejected' | 'new_version';
+export type DocumentType = 'solicitud_prestamo' | 'liquidacion_prestamo' | 'datos_generales';
 
 export interface Profile {
   id: string;
@@ -27,6 +28,7 @@ export interface Document {
   description?: string;
   current_version: number;
   status: DocumentStatus;
+  document_type: DocumentType;
   uploaded_by: string;
   created_at: string;
   updated_at: string;
@@ -163,14 +165,40 @@ export const documentHelpers = {
     return { data, error };
   },
 
-  async createDocument(title: string, description: string, uploadedBy: string) {
+  async createDocument(title: string, description: string, documentType: DocumentType, uploadedBy: string) {
     const { data, error } = await supabase
       .from('documents')
       .insert({
         title,
         description,
+        document_type: documentType,
         uploaded_by: uploadedBy,
       })
+      .select()
+      .single();
+    
+    return { data, error };
+  },
+
+  async getDocumentByType(documentType: DocumentType) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('document_type', documentType)
+      .neq('status', 'rejected')
+      .maybeSingle();
+    
+    return { data, error };
+  },
+
+  async incrementDocumentVersion(documentId: string, newVersion: number) {
+    const { data, error } = await supabase
+      .from('documents')
+      .update({ 
+        current_version: newVersion,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', documentId)
       .select()
       .single();
     

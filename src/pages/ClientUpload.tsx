@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, FileText, CheckCircle, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { documentHelpers, authHelpers } from '@/lib/supabase';
+import { documentHelpers, authHelpers, type DocumentType } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
 export default function ClientUpload() {
@@ -19,6 +20,7 @@ export default function ClientUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [documentType, setDocumentType] = useState<DocumentType>('datos_generales');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -50,17 +52,40 @@ export default function ClientUpload() {
     setUploading(true);
 
     try {
-      // Create document record
-      const { data: document, error: docError } = await documentHelpers.createDocument(
-        title,
-        description,
-        user.id
-      );
+      // Check if document of this type already exists
+      const { data: existingDoc } = await documentHelpers.getDocumentByType(documentType);
 
-      if (docError) throw docError;
+      let documentId: string;
+      let versionNumber: number;
+
+      if (existingDoc) {
+        // Document exists, create new version
+        documentId = existingDoc.id;
+        versionNumber = existingDoc.current_version + 1;
+
+        // Update document version
+        const { error: updateError } = await documentHelpers.incrementDocumentVersion(
+          documentId,
+          versionNumber
+        );
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new document record
+        const { data: newDocument, error: docError } = await documentHelpers.createDocument(
+          title,
+          description,
+          documentType,
+          user.id
+        );
+
+        if (docError) throw docError;
+        documentId = newDocument.id;
+        versionNumber = 1;
+      }
 
       // Upload file to storage
-      const fileName = `${document.id}_v1_${file.name}`;
+      const fileName = `${documentId}_v${versionNumber}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(fileName, file);
@@ -71,8 +96,8 @@ export default function ClientUpload() {
       const { error: versionError } = await supabase
         .from('document_versions')
         .insert({
-          document_id: document.id,
-          version_number: 1,
+          document_id: documentId,
+          version_number: versionNumber,
           file_name: file.name,
           file_path: fileName,
           file_size: file.size,
@@ -82,14 +107,17 @@ export default function ClientUpload() {
       if (versionError) throw versionError;
 
       toast({
-        title: "Archivo subido exitosamente",
-        description: "Tu documento ha sido cargado correctamente",
+        title: existingDoc ? "Nueva versión creada" : "Archivo subido exitosamente",
+        description: existingDoc 
+          ? `Se creó la versión ${versionNumber} del documento`
+          : "Tu documento ha sido cargado correctamente",
       });
 
       // Reset form
       setFile(null);
       setTitle('');
       setDescription('');
+      setDocumentType('datos_generales');
       const fileInput = window.document.getElementById('file-input') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
@@ -145,6 +173,22 @@ export default function ClientUpload() {
                   placeholder="Ej: Contrato de Préstamo 2025"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="document-type">
+                  Tipo de Documento <span className="text-destructive">*</span>
+                </Label>
+                <Select value={documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
+                  <SelectTrigger id="document-type">
+                    <SelectValue placeholder="Selecciona el tipo de documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="solicitud_prestamo">Solicitud de Préstamo</SelectItem>
+                    <SelectItem value="liquidacion_prestamo">Liquidación de Préstamo</SelectItem>
+                    <SelectItem value="datos_generales">Datos Generales</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
