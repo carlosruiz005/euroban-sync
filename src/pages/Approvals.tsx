@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, LogOut, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, LogOut, Clock, CheckCircle, AlertTriangle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { authHelpers } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import * as XLSX from 'xlsx';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,9 @@ const Approvals = () => {
   const [comments, setComments] = useState('');
   const [requesting, setRequesting] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<Document | null>(null);
+  const [fileData, setFileData] = useState<any[][]>([]);
+  const [loadingFile, setLoadingFile] = useState(false);
 
   useEffect(() => {
     loadDocuments();
@@ -159,6 +163,46 @@ const Approvals = () => {
       toast.error('Error al aprobar documento: ' + error.message);
     } finally {
       setApproving(false);
+    }
+  };
+
+  const handleViewDocument = async (doc: Document) => {
+    setViewingDoc(doc);
+    setLoadingFile(true);
+    setFileData([]);
+
+    try {
+      // Get the latest version of the document
+      const { data: versionData, error: versionError } = await supabase
+        .from('document_versions')
+        .select('file_path')
+        .eq('document_id', doc.id)
+        .order('version_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (versionError) throw versionError;
+
+      // Download the file from storage
+      const { data: fileBlob, error: downloadError } = await supabase
+        .storage
+        .from('documents')
+        .download(versionData.file_path);
+
+      if (downloadError) throw downloadError;
+
+      // Parse the file
+      const arrayBuffer = await fileBlob.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      
+      setFileData(jsonData as any[][]);
+    } catch (error: any) {
+      toast.error('Error al cargar el archivo: ' + error.message);
+      setViewingDoc(null);
+    } finally {
+      setLoadingFile(false);
     }
   };
 
@@ -298,7 +342,11 @@ const Approvals = () => {
                 </TableHeader>
                 <TableBody>
                   {documents.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-muted/50">
+                    <TableRow 
+                      key={doc.id} 
+                      className={`hover:bg-muted/50 cursor-pointer ${viewingDoc?.id === doc.id ? 'bg-muted' : ''}`}
+                      onClick={() => handleViewDocument(doc)}
+                    >
                       <TableCell className="font-medium">{doc.title}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="capitalize">
@@ -320,7 +368,7 @@ const Approvals = () => {
                           locale: es 
                         })}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-2 justify-end">
                           <Button 
                             variant="default" 
@@ -380,6 +428,73 @@ const Approvals = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* File Viewer */}
+        {viewingDoc && (
+          <Card className="shadow-elegant mt-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Visor de Archivo: {viewingDoc.title}
+                  </CardTitle>
+                  <CardDescription>
+                    Versión {viewingDoc.current_version}
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setViewingDoc(null);
+                    setFileData([]);
+                  }}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingFile ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-muted-foreground mt-2">Cargando archivo...</p>
+                </div>
+              ) : fileData.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">No se pudo cargar el contenido del archivo</p>
+                </div>
+              ) : (
+                <div className="overflow-auto max-h-[600px] border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {fileData[0]?.map((header: any, index: number) => (
+                          <TableHead key={index} className="whitespace-nowrap font-semibold">
+                            {header || `Columna ${index + 1}`}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {fileData.slice(1).map((row: any[], rowIndex: number) => (
+                        <TableRow key={rowIndex}>
+                          {row.map((cell: any, cellIndex: number) => (
+                            <TableCell key={cellIndex} className="whitespace-nowrap">
+                              {cell !== null && cell !== undefined ? String(cell) : '-'}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
