@@ -6,13 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, FileText, CheckCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { documentHelpers } from '@/lib/supabase';
+import { documentHelpers, authHelpers } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 export default function ClientUpload() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
@@ -22,6 +24,15 @@ export default function ClientUpload() {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
+  };
+
+  const handleLogout = async () => {
+    await authHelpers.signOut();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión exitosamente",
+    });
+    navigate('/auth');
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -96,13 +107,19 @@ export default function ClientUpload() {
   return (
     <div className="min-h-screen bg-gradient-subtle p-6">
       <div className="max-w-3xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Cargar Documentos
-          </h1>
-          <p className="text-muted-foreground">
-            Sube tus documentos para revisión y aprobación
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              Cargar Documentos
+            </h1>
+            <p className="text-muted-foreground">
+              Sube tus documentos para revisión y aprobación
+            </p>
+          </div>
+          <Button onClick={handleLogout} variant="outline">
+            <LogOut className="w-4 h-4 mr-2" />
+            Cerrar Sesión
+          </Button>
         </div>
 
         <Card className="shadow-elegant">
