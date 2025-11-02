@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ClientUpload from "./pages/ClientUpload";
+import Approvals from "./pages/Approvals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="client">
                   <ClientUpload />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/approvals" 
+              element={
+                <ProtectedRoute requiredRole="executive">
+                  <Approvals />
                 </ProtectedRoute>
               } 
             />
