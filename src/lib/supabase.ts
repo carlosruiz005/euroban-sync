@@ -185,7 +185,8 @@ export const documentHelpers = {
       .from('documents')
       .select('*')
       .eq('document_type', documentType)
-      .neq('status', 'rejected')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     
     return { data, error };
