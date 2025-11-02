@@ -17,15 +17,20 @@ const loginSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles, hasRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
+    if (user && roles.length > 0) {
+      // Redirect clients to upload page
+      if (hasRole('client')) {
+        navigate('/upload', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, roles, hasRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +44,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success('Inicio de sesión exitoso');
-      navigate('/dashboard', { replace: true });
+      // Redirect will be handled by useEffect based on user role
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
