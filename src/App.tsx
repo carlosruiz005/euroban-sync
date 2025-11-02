@@ -7,11 +7,13 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NonClientRoute } from "@/components/NonClientRoute";
 import { ExecutiveRoute } from "@/components/ExecutiveRoute";
+import { InternalTeamRoute } from "@/components/InternalTeamRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ClientUpload from "./pages/ClientUpload";
 import Approvals from "./pages/Approvals";
+import InternalDocs from "./pages/InternalDocs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,14 @@ const App = () => (
                 <ExecutiveRoute>
                   <Approvals />
                 </ExecutiveRoute>
+              } 
+            />
+            <Route 
+              path="/internal-docs" 
+              element={
+                <InternalTeamRoute>
+                  <InternalDocs />
+                </InternalTeamRoute>
               } 
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

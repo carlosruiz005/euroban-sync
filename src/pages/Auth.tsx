@@ -30,7 +30,11 @@ const Auth = () => {
       // Redirect clients to upload page
       else if (hasRole('client')) {
         navigate('/upload', { replace: true });
-      } 
+      }
+      // Redirect internal team to internal docs page
+      else if (hasRole('internal_team')) {
+        navigate('/internal-docs', { replace: true });
+      }
       // Redirect other roles to dashboard
       else {
         navigate('/dashboard', { replace: true });
