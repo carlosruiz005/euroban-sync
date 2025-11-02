@@ -162,14 +162,20 @@ const Dashboard = () => {
         </div>
 
         {/* Actions */}
-        {(hasRole('admin') || hasRole('internal_team')) && (
-          <div className="mb-6">
+        <div className="mb-6 flex gap-3">
+          {(hasRole('admin') || hasRole('internal_team')) && (
             <Button className="shadow-elegant">
               <Upload className="w-4 h-4 mr-2" />
               Subir Nuevo Documento
             </Button>
-          </div>
-        )}
+          )}
+          {hasRole('client') && (
+            <Button onClick={() => navigate('/upload')} className="shadow-elegant">
+              <Upload className="w-4 h-4 mr-2" />
+              Cargar Documento
+            </Button>
+          )}
+        </div>
 
         {/* Documents Table */}
         <Card className="shadow-elegant">
