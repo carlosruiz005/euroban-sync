@@ -32,6 +32,8 @@ interface Document {
   status: Database['public']['Enums']['document_status'];
   current_version: number;
   created_at: string;
+  uploaded_by: string;
+  document_type: Database['public']['Enums']['document_type'];
   uploader?: {
     full_name: string;
   };
@@ -45,6 +47,7 @@ const Approvals = () => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [comments, setComments] = useState('');
   const [requesting, setRequesting] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   useEffect(() => {
     loadDocuments();
@@ -106,6 +109,56 @@ const Approvals = () => {
       toast.error('Error al solicitar cambios: ' + error.message);
     } finally {
       setRequesting(false);
+    }
+  };
+
+  const handleApproveDocument = async (doc: Document) => {
+    if (!user) return;
+
+    setApproving(true);
+
+    try {
+      // Update document status to approved
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({ status: 'approved' satisfies Database['public']['Enums']['document_status'] })
+        .eq('id', doc.id);
+
+      if (updateError) throw updateError;
+
+      // Create approval record
+      const { error: approvalError } = await supabase
+        .from('approvals')
+        .insert({
+          document_id: doc.id,
+          version_number: doc.current_version,
+          requested_by: user.id,
+          reviewed_by: user.id,
+          status: 'approved' satisfies Database['public']['Enums']['document_status'],
+          comments: 'Documento aprobado',
+        });
+
+      if (approvalError) throw approvalError;
+
+      // Create notification for the uploader
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: doc.uploaded_by,
+          type: 'document_approved' satisfies Database['public']['Enums']['notification_type'],
+          title: 'Documento Aprobado',
+          message: `Tu documento "${doc.title}" ha sido aprobado`,
+          document_id: doc.id,
+        });
+
+      if (notificationError) throw notificationError;
+
+      toast.success('Documento aprobado exitosamente');
+      loadDocuments();
+    } catch (error: any) {
+      toast.error('Error al aprobar documento: ' + error.message);
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -235,6 +288,7 @@ const Approvals = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Título</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Versión</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Subido por</TableHead>
@@ -246,6 +300,11 @@ const Approvals = () => {
                   {documents.map((doc) => (
                     <TableRow key={doc.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{doc.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {doc.document_type?.replace(/_/g, ' ') || 'N/A'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">v{doc.current_version}</Badge>
                       </TableCell>
@@ -262,45 +321,57 @@ const Approvals = () => {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedDoc(doc)}
-                            >
-                              Solicitar Cambios
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Solicitar Cambios</DialogTitle>
-                              <DialogDescription>
-                                Documento: {doc.title}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="comments">Comentarios</Label>
-                                <Textarea
-                                  id="comments"
-                                  placeholder="Describe los cambios necesarios..."
-                                  value={comments}
-                                  onChange={(e) => setComments(e.target.value)}
-                                  rows={4}
-                                />
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button
-                                onClick={handleRequestChanges}
-                                disabled={requesting}
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleApproveDocument(doc)}
+                            disabled={approving || doc.status === 'approved'}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            {doc.status === 'approved' ? 'Aprobado' : 'Aprobar'}
+                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedDoc(doc)}
+                                disabled={doc.status === 'approved'}
                               >
-                                {requesting ? 'Enviando...' : 'Solicitar Cambios'}
+                                Solicitar Cambios
                               </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Solicitar Cambios</DialogTitle>
+                                <DialogDescription>
+                                  Documento: {doc.title}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="comments">Comentarios</Label>
+                                  <Textarea
+                                    id="comments"
+                                    placeholder="Describe los cambios necesarios..."
+                                    value={comments}
+                                    onChange={(e) => setComments(e.target.value)}
+                                    rows={4}
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button
+                                  onClick={handleRequestChanges}
+                                  disabled={requesting}
+                                >
+                                  {requesting ? 'Enviando...' : 'Solicitar Cambios'}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

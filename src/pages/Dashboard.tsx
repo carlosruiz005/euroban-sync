@@ -201,6 +201,7 @@ const Dashboard = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Título</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Versión</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Subido por</TableHead>
@@ -212,6 +213,11 @@ const Dashboard = () => {
                   {documents.map((doc) => (
                     <TableRow key={doc.id} className="cursor-pointer hover:bg-muted/50 transition-smooth">
                       <TableCell className="font-medium">{doc.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {doc.document_type?.replace(/_/g, ' ') || 'N/A'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">v{doc.current_version}</Badge>
                       </TableCell>
